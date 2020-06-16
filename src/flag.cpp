@@ -7,7 +7,14 @@ using namespace std;
 
 namespace flag {
 
+  string clean_flag(string str)
+  {
+    return str.erase(0, str.find_first_not_of("-"));
+  }
+
   Set::Set(string prog, string help): name(prog), desc(help) {}
+
+  Set::~Set() {}
 
   string Set::usage()
   {
@@ -46,6 +53,12 @@ namespace flag {
     if (name != "") {
       name = string(argv[0]);
     }
+    int i = parse_options(argc, argv);
+    parse_arguments(i, argc, argv);
+  }
+
+  int Set::parse_options(int argc, char** argv)
+  {
     int i = 1;
     while (i < argc)
     {
@@ -57,10 +70,6 @@ namespace flag {
       string val = "";
       bool done = false;
       int eq = opt.find("=");
-      if (eq == string::npos && minus == 1 && opt.size() > 1)
-      {
-        throw bad_syntax(opt);
-      }
       if (eq == string::npos)
       {
         val = string(argv[++i]);
@@ -77,18 +86,23 @@ namespace flag {
         val = opt.substr(eq+1);
         done = true;
       }
-      if (!is_registered(opt))
-      {
-        throw not_defined(opt);
-      }
-      if (is_defined(opt))
-      {
-        throw already_defined(opt);
-      }
-      options[opt] = val;
+      update_option(opt, val);
       i++;
     }
-    parse_arguments(i, argc, argv);
+    return i;
+  }
+
+  void Set::parse_arguments(int i, int argc, char** argv)
+  {
+    if (i < argc && string(argv[i]) == "--")
+    {
+      i++;
+    }
+    while (i < argc)
+    {
+      args.push_back(argv[i]);
+      i++;
+    }
   }
 
   pair<string, int> Set::parse_option(string str)
@@ -114,19 +128,6 @@ namespace flag {
     return make_pair(str, minus);
   }
 
-  void Set::parse_arguments(int i, int argc, char** argv)
-  {
-    if (i < argc && string(argv[i]) == "--")
-    {
-      i++;
-    }
-    while (i < argc)
-    {
-      args.push_back(argv[i]);
-      i++;
-    }
-  }
-
   bool Set::is_registered(string name)
   {
     return flags.find(name) != flags.end();
@@ -137,82 +138,105 @@ namespace flag {
     return options.find(name) != options.end();
   }
 
-  void Set::add_option(string sh, string lg, char narg, string help)
+  void Set::update_option(string name, string value)
   {
-    add_option(sh, narg, help);
-    add_option(lg, narg, help);
+    if (!is_registered(name))
+    {
+      throw not_defined(name);
+    }
+    if (is_defined(name))
+    {
+      throw already_defined(name);
+    }
+    option opt = flags[name];
+    switch (opt.type)
+    {
+      case String:
+      *(string *)opt.ptr = value;
+      break;
+      case Uint:
+      *(unsigned int *)opt.ptr = stoul(value);
+      break;
+      case Int:
+      *(int *)opt.ptr = stoi(value);
+      break;
+      case Double:
+      *(double *)opt.ptr = stod(value);
+      break;
+      case Bool:
+      *(bool *)opt.ptr = value == "" || value == "1";
+      break;
+    }
+    options[name] = value;
   }
 
-  void Set::add_option(string name, char narg, string help)
+  void Set::register_option(option opt)
   {
-    if (name.size() == 0)
+    if (opt.optshort == "" && opt.optlong == "")
     {
-      return;
+      throw bad_syntax("<empty>");
+    }
+    if (opt.optshort != "")
+    {
+      validate_option(opt.optshort, true);
+      flags[opt.optshort] = opt;
+    }
+    if (opt.optlong != "")
+    {
+      validate_option(opt.optlong, false);
+      flags[opt.optlong] = opt;
+    }
+    list.push_back(opt);
+  }
+
+  void Set::validate_option(string name, bool shortopt)
+  {
+    if ((shortopt && name.size() != 1) || (!shortopt && name.size() == 1))
+    {
+      throw bad_syntax(name);
     }
     if (is_registered(name))
     {
       throw already_defined(name);
     }
-    flags[name] = {
+  }
+
+  void Set::string_var(string *val, string sh, string lg, string help)
+  {
+    var(val, String, sh, lg, help);
+  }
+
+  void Set::int_var(int *val, string sh, string lg, string help)
+  {
+    var(val, Int, sh, lg, help);
+  }
+
+  void Set::uint_var(unsigned int *val, string sh, string lg, string help)
+  {
+    var(val, Uint, sh, lg, help);
+  }
+
+  void Set::double_var(double *val, string sh, string lg, string help)
+  {
+    var(val, Double, sh, lg, help);
+  }
+
+  void Set::bool_var(bool *val, string sh, string lg, string help)
+  {
+    var(val, Bool, sh, lg, help);
+  }
+
+  void Set::var(void* val, flagtype type, string sh, string lg, string help)
+  {
+    clean_flag(sh);
+    clean_flag(lg);
+    option opt{
       .help = help,
-      .narg = narg,
+      .optshort = sh,
+      .optlong = lg,
+      .ptr = val,
     };
-  }
-
-  pair<string, bool> Set::option(string name)
-  {
-    bool ok = false;
-    string value = "";
-    if (options.count(name) > 0)
-    {
-      ok = true;
-      value = options[name];
-    }
-    return make_pair(value, ok);
-  }
-
-  void Set::option(string name, string& value)
-  {
-    auto [val, ok] = option(name);
-    if (ok)
-    {
-      value = val;
-    }
-  }
-
-  void Set::option(string name, int& value)
-  {
-    auto [val, ok] = option(name);
-    if (ok)
-    {
-      value = stoi(val);
-    }
-  }
-
-  void Set::option(string name, unsigned int& value)
-  {
-    auto [val, ok] = option(name);
-    if (ok)
-    {
-      value = stoul(val);
-    }
-  }
-
-  void Set::option(string name, double& value)
-  {
-    auto [val, ok] = option(name);
-    if (ok)
-    {
-      value = stod(val);
-    }
-  }
-
-  void Set::option(string name, bool& value)
-  {
-    auto [val, ok] = option(name);
-    if (ok)
-    {
-      value = val == "" || val == "1";
-    }
+    opt.type = type;
+    register_option(opt);
   }
 }

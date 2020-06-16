@@ -50,50 +50,62 @@ namespace flag
     already_defined(string o): flag_error(o, "flag: already defined") {}
   };
 
+
   class Set
   {
+  enum flagtype {
+    Int,
+    Uint,
+    Double,
+    String,
+    Bool,
+  };
 
-  struct setting {
+  struct option {
     string help;
-    char narg;
-    bool required;
+    string optshort;
+    string optlong;
+    flagtype type;
+    void* ptr;
   };
 
   private:
     string name;
     string desc;
-    map<string, setting> flags;
+    vector<option> list;
+    map<string, option> flags;
 
     map<string, string> options;
     vector<string> args;
 
+    void var(void* val, flagtype type, string sh, string lg, string help);
+    void register_option(option opt);
+    void update_option(string name, string value);
+    void validate_option(string name, bool shortopt);
     bool is_registered(string name);
     bool is_defined(string name);
 
-    pair<string, bool> option(string name);
-    void add_option(string name, char narg, string help);
-
     pair<string, int> parse_option(string str);
+    int parse_options(int argc, char** argv);
     void parse_arguments(int i, int argc, char** argv);
 
   public:
     Set(string prog = "", string help = "");
+    ~Set();
 
     int narg();
     string arg(int i);
+
+    void string_var(string* val, string sh, string lg = "", string help = "");
+    void int_var(int *val, string sh, string lg = "", string help = "");
+    void uint_var(unsigned int *val, string sh, string lg = "", string help = "");
+    void double_var(double *val, string sh, string lg = "", string help = "");
+    void bool_var(bool *val, string sh, string lg = "", string help = "");
 
     string help();
     string usage();
     string program();
 
-    void add_option(string sh, string lg = "", char narg = 0, string help = "");
-
     void parse(int argc, char** argv);
-
-    void option(string name, string& value);
-    void option(string name, int& value);
-    void option(string name, unsigned int& value);
-    void option(string name, double& value);
-    void option(string name, bool& value);
   };
 }

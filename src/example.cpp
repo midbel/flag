@@ -8,16 +8,19 @@ void print_args(flag::Set &set);
 int main(int argc, char** argv)
 {
   flag::Set set;
+  string dir = "/var";
+  bool verbose = false;
+  int number = 0;
   try
   {
-    set.add_option("d");
-    set.add_option("e");
-    set.add_option("w");
-    set.add_option("j");
-    set.add_option("", "long");
-
+    set.string_var(&dir, "d", "dir", "working directory");
+    set.bool_var(&verbose, "v", "verbose", "verbose");
+    set.int_var(&number, "n", "number", "number");
     set.parse(argc, argv);
     print_args(set);
+    cout << "working directory: " << dir << endl;
+    cout << "verbose: " << verbose << endl;
+    cout << "number: " << number << endl;
   }
   catch (flag::flag_error& e)
   {
@@ -34,6 +37,6 @@ void print_args(flag::Set &set)
 {
   for (int i = 0; i < set.narg(); i++)
   {
-    cout << "arg: " << set.arg(i) << endl;
+    cout <<  i <<" arg: " << set.arg(i) << endl;
   }
 }
