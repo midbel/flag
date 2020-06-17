@@ -5,8 +5,8 @@
 
 using namespace std;
 
-namespace flag
-{
+namespace flag {
+  
   class flag_error: public exception
   {
   private:
@@ -17,17 +17,14 @@ namespace flag
     flag_error(string o, string m): opt(o), msg(m) {}
     virtual ~flag_error() {}
 
-    virtual const char* what() const throw()
-    {
-      if (msg.size() == 0)
-      {
+    virtual const char* what() const throw() {
+      if (msg.size() == 0) {
         return "unexpected error";
       }
       return msg.c_str();
     }
 
-    string invalid_option()
-    {
+    string invalid_option() {
       return opt;
     }
   };
@@ -67,6 +64,21 @@ namespace flag
     string optlong;
     flagtype type;
     void* ptr;
+
+    friend ostream& operator<<(ostream& os, const option& opt) {
+      os << "[";
+      if (opt.optshort.size()) {
+        os << "-" << opt.optshort;
+        if (opt.optlong.size()) {
+          os << ",";
+        }
+      }
+      if (opt.optlong.size()) {
+        os << "--" << opt.optlong;
+      }
+      os << "] ";
+      return os;
+    }
   };
 
   private:
