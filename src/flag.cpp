@@ -83,19 +83,18 @@ namespace flag {
         break;
       }
       string val = "";
-      bool done = false;
       int eq = opt.find("=");
       if (eq == string::npos) {
-        val = string(argv[++i]);
+        if (i+1 < argc && !is_flag(opt)) {
+          val = string(argv[++i]);
+        }
         if (val[0] == '-') {
-          done = true;
           val = "";
           i--;
         }
       } else {
         opt = opt.substr(0, eq);
         val = opt.substr(eq+1);
-        done = true;
       }
       update_option(opt, val);
       i++;
@@ -131,6 +130,13 @@ namespace flag {
     return make_pair(str, minus);
   }
 
+  bool Set::is_flag(string name) {
+    if (is_registered(name)) {
+      return flags[name].type == Bool;
+    }
+    return false;
+  }
+
   bool Set::is_registered(string name) {
     return flags.find(name) != flags.end();
   }
@@ -147,6 +153,9 @@ namespace flag {
       throw already_defined(name);
     }
     option opt = flags[name];
+    if (opt.type != Bool && opt.required && !value.size()) {
+      throw missing_value(name);
+    }
     switch (opt.type) {
       case String:
       *(string *)opt.ptr = value;
@@ -191,33 +200,34 @@ namespace flag {
     }
   }
 
-  void Set::string_var(string *val, string sh, string lg, string help) {
-    var(val, String, sh, lg, help);
+  void Set::string_var(string *val, string sh, string lg, string help, bool required) {
+    var(val, String, sh, lg, help, required);
   }
 
-  void Set::int_var(int *val, string sh, string lg, string help) {
-    var(val, Int, sh, lg, help);
+  void Set::int_var(int *val, string sh, string lg, string help, bool required) {
+    var(val, Int, sh, lg, help, required);
   }
 
-  void Set::uint_var(unsigned int *val, string sh, string lg, string help) {
-    var(val, Uint, sh, lg, help);
+  void Set::uint_var(unsigned int *val, string sh, string lg, string help, bool required) {
+    var(val, Uint, sh, lg, help, required);
   }
 
-  void Set::double_var(double *val, string sh, string lg, string help) {
-    var(val, Double, sh, lg, help);
+  void Set::double_var(double *val, string sh, string lg, string help, bool required) {
+    var(val, Double, sh, lg, help, required);
   }
 
-  void Set::bool_var(bool *val, string sh, string lg, string help) {
-    var(val, Bool, sh, lg, help);
+  void Set::bool_var(bool *val, string sh, string lg, string help, bool required) {
+    var(val, Bool, sh, lg, help, required);
   }
 
-  void Set::var(void* val, flagtype type, string sh, string lg, string help) {
+  void Set::var(void* val, flagtype type, string sh, string lg, string help, bool required) {
     clean_flag(sh);
     clean_flag(lg);
     option opt{
       .help = help,
       .optshort = sh,
       .optlong = lg,
+      .required = required,
       .ptr = val,
     };
     opt.type = type;

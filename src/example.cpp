@@ -19,19 +19,19 @@ int main(int argc, char** argv)
     set.bool_var(&verbose, "v", "verbose", "increase verbosity");
     set.bool_var(&help, "h", "help", "show help and exit");
     set.bool_var(&dryrun, "n", "dry-run", "run command but do nothing");
-    set.int_var(&number, "c", "limit", "limit recursion level");
+    set.int_var(&number, "c", "limit", "limit recursion level", true);
     set.parse(argc, argv);
+    if (help) {
+      cout << set.help() << endl;
+      return 0;
+    }
     print_args(set);
     cout << "working directory: " << dir << endl;
     cout << "verbose: " << boolalpha << verbose << endl;
     cout << "help: " << boolalpha << help << endl;
     cout << "dryrun: " << boolalpha << dryrun << endl;
     cout << "number: " << number << endl;
-    cout << set.usage() << endl;
 
-    if (help) {
-    }
-    cout << set.help() << endl;
   }
   catch (flag::flag_error& e)
   {

@@ -6,7 +6,7 @@
 using namespace std;
 
 namespace flag {
-  
+
   class flag_error: public exception
   {
   private:
@@ -47,6 +47,11 @@ namespace flag {
     already_defined(string o): flag_error(o, "flag: already defined") {}
   };
 
+  class missing_value: public flag_error
+  {
+  public:
+    missing_value(string o): flag_error(o, "flag: value is missing") {}
+  };
 
   class Set
   {
@@ -63,6 +68,7 @@ namespace flag {
     string optshort;
     string optlong;
     flagtype type;
+    bool required;
     void* ptr;
 
     friend ostream& operator<<(ostream& os, const option& opt) {
@@ -90,12 +96,13 @@ namespace flag {
     map<string, string> options;
     vector<string> args;
 
-    void var(void* val, flagtype type, string sh, string lg, string help);
+    void var(void* val, flagtype type, string sh, string lg, string help, bool required);
     void register_option(option opt);
     void update_option(string name, string value);
     void validate_option(string name, bool shortopt);
     bool is_registered(string name);
     bool is_defined(string name);
+    bool is_flag(string name);
 
     pair<string, int> parse_option(string str);
     int parse_options(int argc, char** argv);
@@ -108,11 +115,11 @@ namespace flag {
     int narg();
     string arg(int i);
 
-    void string_var(string* val, string sh, string lg = "", string help = "");
-    void int_var(int *val, string sh, string lg = "", string help = "");
-    void uint_var(unsigned int *val, string sh, string lg = "", string help = "");
-    void double_var(double *val, string sh, string lg = "", string help = "");
-    void bool_var(bool *val, string sh, string lg = "", string help = "");
+    void string_var(string* val, string sh, string lg = "", string help = "", bool required = false);
+    void int_var(int *val, string sh, string lg = "", string help = "", bool required = false);
+    void uint_var(unsigned int *val, string sh, string lg = "", string help = "", bool required = false);
+    void double_var(double *val, string sh, string lg = "", string help = "", bool required = false);
+    void bool_var(bool *val, string sh, string lg = "", string help = "", bool required = false);
 
     string help();
     string usage();
