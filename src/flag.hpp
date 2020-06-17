@@ -1,3 +1,6 @@
+#ifndef __FLAG_H__
+#define __FLAG_H__
+
 #include <string>
 #include <vector>
 #include <map>
@@ -128,3 +131,5 @@ namespace flag {
     void parse(int argc, char** argv);
   };
 }
+
+#endif
