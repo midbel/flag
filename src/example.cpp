@@ -1,5 +1,5 @@
 #include <iostream>
-#include "flag.hpp"
+#include "flag.h"
 
 using namespace std;
 

@@ -3,7 +3,7 @@
 #include <string>
 #include <iomanip>
 
-#include "flag.hpp"
+#include "flag.h"
 
 using namespace std;
 
