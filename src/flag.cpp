@@ -5,20 +5,18 @@
 
 #include "flag.h"
 
-using namespace std;
-
 namespace flag {
 
-  string clean_flag(string str) {
+  std::string clean_flag(std::string str) {
     return str.erase(0, str.find_first_not_of("-"));
   }
 
-  Set::Set(string prog, string help): name(prog), desc(help) {}
+  Set::Set(std::string prog, std::string help): name(prog), desc(help) {}
 
   Set::~Set() {}
 
-  string Set::usage() {
-    ostringstream os;
+  std::string Set::usage() {
+    std::ostringstream os;
     os << "usage: ";
     os << name;
     os << " ";
@@ -29,22 +27,22 @@ namespace flag {
     return os.str();
   }
 
-  string Set::help() {
+  std::string Set::help() {
     if (desc.size() == 0) {
       return usage();
     }
-    ostringstream os;
+    std::ostringstream os;
     os << desc << "\n\n";
     os << "options:" << "\n\n";
     for (option opt: list) {
       if (opt.optshort.size()) {
-        os << left << setw(16) << "  -" + opt.optshort;
+        os << std::left << std::setw(16) << "  -" + opt.optshort;
         os << opt.help << "\n";
       }
     }
     for (option opt: list) {
       if (opt.optlong.size()) {
-        os << left << setw(16) << "  --" + opt.optlong;
+        os << std::left << std::setw(16) << "  --" + opt.optlong;
         os << opt.help << "\n";
       }
     }
@@ -52,7 +50,7 @@ namespace flag {
     return os.str();
   }
 
-  string Set::program() {
+  std::string Set::program() {
     return name;
   }
 
@@ -60,7 +58,7 @@ namespace flag {
     return args.size();
   }
 
-  string Set::arg(int i) {
+  std::string Set::arg(int i) {
     if (i >= 0 || i < args.size()) {
       return args.at(i);
     }
@@ -69,7 +67,7 @@ namespace flag {
 
   void Set::parse(int argc, char** argv) {
     if (!name.size()) {
-      name = string(argv[0]);
+      name = std::string(argv[0]);
     }
     int i = parse_options(argc, argv);
     parse_arguments(i, argc, argv);
@@ -78,15 +76,15 @@ namespace flag {
   int Set::parse_options(int argc, char** argv) {
     int i = 1;
     while (i < argc) {
-      auto [opt, minus] = parse_option(string(argv[i]));
+      auto [opt, minus] = parse_option(std::string(argv[i]));
       if (minus == 0) {
         break;
       }
-      string val = "";
+      std::string val = "";
       int eq = opt.find("=");
-      if (eq == string::npos) {
+      if (eq == std::string::npos) {
         if (i+1 < argc && !is_flag(opt)) {
-          val = string(argv[++i]);
+          val = std::string(argv[++i]);
         }
         if (val[0] == '-') {
           val = "";
@@ -103,7 +101,7 @@ namespace flag {
   }
 
   void Set::parse_arguments(int i, int argc, char** argv) {
-    if (i < argc && string(argv[i]) == "--") {
+    if (i < argc && std::string(argv[i]) == "--") {
       i++;
     }
     while (i < argc) {
@@ -112,40 +110,40 @@ namespace flag {
     }
   }
 
-  pair<string, int> Set::parse_option(string str) {
+  std::pair<std::string, int> Set::parse_option(std::string str) {
     if (str[0] != '-') {
-      return make_pair("", 0);
+      return std::make_pair("", 0);
     }
     int minus = 1;
     if (str[minus] == '-') {
       minus++;
       if (str.size() == minus) {
-        return make_pair("", 0);
+        return std::make_pair("", 0);
       }
     }
     str = str.substr(minus);
     if (str.size() == 0 || str[0] == '-' || str[0] == '=') {
       throw bad_syntax(str);
     }
-    return make_pair(str, minus);
+    return std::make_pair(str, minus);
   }
 
-  bool Set::is_flag(string name) {
+  bool Set::is_flag(std::string name) {
     if (is_registered(name)) {
       return flags[name].type == Bool;
     }
     return false;
   }
 
-  bool Set::is_registered(string name) {
+  bool Set::is_registered(std::string name) {
     return flags.find(name) != flags.end();
   }
 
-  bool Set::is_defined(string name) {
+  bool Set::is_defined(std::string name) {
     return options.find(name) != options.end();
   }
 
-  void Set::update_option(string name, string value) {
+  void Set::update_option(std::string name, std::string value) {
     if (!is_registered(name)) {
       throw not_defined(name);
     }
@@ -158,16 +156,16 @@ namespace flag {
     }
     switch (opt.type) {
       case String:
-      *(string *)opt.ptr = value;
+      *(std::string *)opt.ptr = value;
       break;
       case Uint:
-      *(unsigned int *)opt.ptr = stoul(value);
+      *(unsigned *)opt.ptr = std::stoul(value);
       break;
       case Int:
-      *(int *)opt.ptr = stoi(value);
+      *(int *)opt.ptr = std::stoi(value);
       break;
       case Double:
-      *(double *)opt.ptr = stod(value);
+      *(double *)opt.ptr = std::stod(value);
       break;
       case Bool:
       *(bool *)opt.ptr = value == "" || value == "1";
@@ -191,7 +189,7 @@ namespace flag {
     list.push_back(opt);
   }
 
-  void Set::validate_option(string name, bool shortopt) {
+  void Set::validate_option(std::string name, bool shortopt) {
     if ((shortopt && name.size() != 1) || (!shortopt && name.size() == 1)) {
       throw bad_syntax(name);
     }
@@ -200,27 +198,27 @@ namespace flag {
     }
   }
 
-  void Set::string_var(string *val, string sh, string lg, string help, bool required) {
+  void Set::string_var(std::string *val, std::string sh, std::string lg, std::string help, bool required) {
     var(val, String, sh, lg, help, required);
   }
 
-  void Set::int_var(int *val, string sh, string lg, string help, bool required) {
+  void Set::int_var(int *val, std::string sh, std::string lg, std::string help, bool required) {
     var(val, Int, sh, lg, help, required);
   }
 
-  void Set::uint_var(unsigned int *val, string sh, string lg, string help, bool required) {
+  void Set::uint_var(unsigned int *val, std::string sh, std::string lg, std::string help, bool required) {
     var(val, Uint, sh, lg, help, required);
   }
 
-  void Set::double_var(double *val, string sh, string lg, string help, bool required) {
+  void Set::double_var(double *val, std::string sh, std::string lg, std::string help, bool required) {
     var(val, Double, sh, lg, help, required);
   }
 
-  void Set::bool_var(bool *val, string sh, string lg, string help, bool required) {
+  void Set::bool_var(bool *val, std::string sh, std::string lg, std::string help, bool required) {
     var(val, Bool, sh, lg, help, required);
   }
 
-  void Set::var(void* val, flagtype type, string sh, string lg, string help, bool required) {
+  void Set::var(void* val, flagtype type, std::string sh, std::string lg, std::string help, bool required) {
     clean_flag(sh);
     clean_flag(lg);
     option opt{
