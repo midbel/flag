@@ -94,6 +94,7 @@ namespace flag {
 
     int narg();
     std::string arg(int i);
+    std::vector<std::string> arguments();
 
     void string_var(std::string* val, std::string sh, std::string lg = "", std::string help = "", bool required = false);
     void int_var(int *val, std::string sh, std::string lg = "", std::string help = "", bool required = false);

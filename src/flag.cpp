@@ -65,6 +65,10 @@ namespace flag {
     return "";
   }
 
+  std::vector<std::string> Set::arguments() {
+    return args;
+  }
+
   void Set::parse(int argc, char** argv) {
     if (!name.size()) {
       name = std::string(argv[0]);
